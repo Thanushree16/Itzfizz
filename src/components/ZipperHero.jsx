@@ -1,9 +1,4 @@
-/**
- * ZipperHeroHorizontal.jsx
- * React + GSAP ScrollTrigger
- * FIXED: Stats/CTA removed from closed fabric state.
- * Only headline shows on load. Stats reveal during scroll.
- */
+
 
 import { useEffect, useRef, forwardRef } from "react";
 import { gsap } from "gsap";
@@ -15,16 +10,15 @@ const SVG_W = 1920, SVG_H = 1080, CY = SVG_H / 2;
 const TEETH = 130, TW = 6, TH = 13, TGAP = 3.5, TUNIT = TW + TGAP;
 
 export default function ZipperHeroHorizontal() {
-  const scrollerRef  = useRef(null);
-  const trackRef     = useRef(null);
-  const sliderRef    = useRef(null);
-  const hintRef      = useRef(null);
-  const brandRef     = useRef(null);  // headline only — no stats
-
-  const cb1Ref       = useRef(null);
-  const cb2Ref       = useRef(null);
-  const cb3Ref       = useRef(null);
-  const openTextRef  = useRef(null);
+  const scrollerRef = useRef(null);
+  const trackRef    = useRef(null);
+  const sliderRef   = useRef(null);
+  const hintRef     = useRef(null);
+  const brandRef    = useRef(null);
+  const cb1Ref      = useRef(null);
+  const cb2Ref      = useRef(null);
+  const cb3Ref      = useRef(null);
+  const openTextRef = useRef(null);
 
   const tpRef  = useRef(null); const tsRef = useRef(null);
   const bpRef  = useRef(null); const bsRef = useRef(null);
@@ -45,14 +39,18 @@ export default function ZipperHeroHorizontal() {
     document.documentElement.style.overflow = "hidden";
 
     const W = window.innerWidth, H = window.innerHeight;
+    const isMobile = W < 768;
     const ns = "http://www.w3.org/2000/svg";
+
+    // On mobile use fewer teeth for performance
+    const teethCount = isMobile ? 60 : 130;
 
     // Build teeth
     tT.current = []; bT.current = [];
     function mkT(gRef, arr, ry) {
       const g = gRef.current;
       while (g.firstChild) g.removeChild(g.firstChild);
-      for (let i = 0; i < TEETH; i++) {
+      for (let i = 0; i < teethCount; i++) {
         const r = document.createElementNS(ns, "rect");
         r.setAttribute("width", TW); r.setAttribute("height", TH);
         r.setAttribute("ry", ry); r.setAttribute("fill", "#c8c8c8");
@@ -89,7 +87,7 @@ export default function ZipperHeroHorizontal() {
       tsRef.current.setAttribute("d", [`M ${tP0.x},${tP0.y}`,`C ${tP1.x},${tP1.y} ${tP2.x},${tP2.y} ${tP3.x},${tP3.y}`,`L ${tP3.x},${tP3.y+SW}`,`C ${tP2.x},${tP2.y+SW} ${tP1.x},${tP1.y+SW} ${tP0.x},${tP0.y+SW} Z`].join(" "));
       bpRef.current.setAttribute("d", [`M 0,${SVG_H} L ${SVG_W},${SVG_H} L ${SVG_W},${CY}`,`L ${sx},${CY}`,`C ${bP2.x},${bP2.y} ${bP1.x},${bP1.y} ${bP0.x},${bP0.y}`,`L 0,${SVG_H} Z`].join(" "));
       bsRef.current.setAttribute("d", [`M ${bP0.x},${bP0.y}`,`C ${bP1.x},${bP1.y} ${bP2.x},${bP2.y} ${bP3.x},${bP3.y}`,`L ${bP3.x},${bP3.y-SW}`,`C ${bP2.x},${bP2.y-SW} ${bP1.x},${bP1.y-SW} ${bP0.x},${bP0.y-SW} Z`].join(" "));
-      for (let i = 0; i < TEETH; i++) {
+      for (let i = 0; i < teethCount; i++) {
         const tx = i * TUNIT + 2;
         if (sx <= 0 || tx >= sx) {
           tT.current[i].setAttribute("visibility", "hidden");
@@ -122,10 +120,17 @@ export default function ZipperHeroHorizontal() {
 
     scene(0, 0);
 
-    // Dots
+    // Dots — hide on mobile
+    if (isMobile) {
+      [d0Ref, d1Ref, d2Ref, d3Ref].forEach(r => {
+        if (r.current) r.current.style.display = "none";
+      });
+    }
+
     const dotRefs = [d0Ref, d1Ref, d2Ref, d3Ref];
     const isDark  = [false, true, false, true];
     function setDot(active) {
+      if (isMobile) return;
       dotRefs.forEach((r, i) => {
         if (!r.current) return;
         r.current.style.background = i === active
@@ -138,7 +143,7 @@ export default function ZipperHeroHorizontal() {
     const scroller = scrollerRef.current;
     ScrollTrigger.defaults({ scroller });
 
-    /* ── ON-LOAD: only headline letters stagger in ── */
+    /* ── ON-LOAD: headline stagger ── */
     const letters = scroller.querySelectorAll(".hz-letter");
     gsap.set(letters, { opacity: 0, y: 36, rotateX: -80 });
     gsap.set(brandRef.current, { opacity: 1 });
@@ -147,11 +152,11 @@ export default function ZipperHeroHorizontal() {
     const loadTL = gsap.timeline({ delay: 0.15 });
     loadTL.to(letters, {
       opacity: 1, y: 0, rotateX: 0,
-      duration: 0.65, stagger: 0.032,
+      duration: 0.65, stagger: isMobile ? 0.02 : 0.032,
       ease: "power3.out",
     }, 0);
 
-    /* ── ZIPPER TL (0 → 57% of 700vh) ── */
+    /* ── ZIPPER TL ── */
     const st = { sx: 0, sp: 0 };
 
     const ztl = gsap.timeline({
@@ -159,7 +164,7 @@ export default function ZipperHeroHorizontal() {
         trigger: "#hz-spacer",
         start: "top top",
         end: "57%",
-        scrub: 2.5,
+        scrub: isMobile ? 1.8 : 2.5,
         onUpdate(s) {
           hintEl.style.opacity = s.progress < 0.02 ? "1" : "0";
           setDot(0);
@@ -167,24 +172,29 @@ export default function ZipperHeroHorizontal() {
       },
     });
 
-    // Only fade brand (headline) — no stats/cta to fade
     ztl.to(brandRef.current, { opacity: 0, y: -20, ease: "power1.in", duration: 0.1 }, 0);
-
     ztl.to(sliderEl, { x: W * 1.1, ease: "none" }, 0);
     ztl.to(st, { sx: SVG_W * 1.12, sp: SVG_H + 20, ease: "none", onUpdate() { scene(st.sx, st.sp); } }, 0);
 
-    // Stat blocks reveal left→right as zipper opens
-    ztl.fromTo(cb1Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.12);
-    ztl.to(cb1Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.30);
-
-    ztl.fromTo(cb2Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.37);
-    ztl.to(cb2Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.55);
-
-    ztl.fromTo(cb3Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.61);
-    ztl.to(cb3Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.80);
+    // On mobile show only 2 stat blocks (less crowded)
+    if (isMobile) {
+      ztl.fromTo(cb1Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.12 }, 0.15);
+      ztl.to(cb1Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.10 }, 0.40);
+      ztl.fromTo(cb2Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.12 }, 0.50);
+      ztl.to(cb2Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.10 }, 0.75);
+    } else {
+      ztl.fromTo(cb1Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.12);
+      ztl.to(cb1Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.30);
+      ztl.fromTo(cb2Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.37);
+      ztl.to(cb2Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.55);
+      ztl.fromTo(cb3Ref.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.61);
+      ztl.to(cb3Ref.current, { opacity: 0, y: -12, ease: "power2.in", duration: 0.07 }, 0.80);
+    }
 
     ztl.fromTo(openTextRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, ease: "power2.out", duration: 0.09 }, 0.86);
     ztl.to(openTextRef.current, { opacity: 0, ease: "power2.in", duration: 0.07 }, 0.95);
+
+    
 
     /* ── HORIZONTAL SLIDE (57% → 100%) ── */
     gsap.to(trackRef.current, {
@@ -206,7 +216,6 @@ export default function ZipperHeroHorizontal() {
     return () => ScrollTrigger.getAll().forEach(t => t.kill());
   }, []);
 
-  // Headline letters
   const headline = "WELCOME ITZFIZZ";
   const headlineLetters = headline.split("").map((ch, i) => (
     <span key={i} className="hz-letter" style={{
@@ -230,45 +239,103 @@ export default function ZipperHeroHorizontal() {
             {/* ── PANEL 1: ZIPPER ── */}
             <div style={{ width:"100vw", height:"100vh", flexShrink:0, position:"relative", overflow:"hidden", background:"#0d0d0d" }}>
 
-              {/* Light bg revealed as zipper opens */}
+              {/* Light bg */}
               <div style={{ position:"absolute", inset:0, background:"linear-gradient(135deg,#f0ede6,#e8e4dc)", zIndex:0 }} />
 
-              {/* Brand layer — HEADLINE ONLY on closed fabric */}
+              {/* Brand — headline only */}
               <div ref={brandRef} style={{
                 position:"absolute", inset:0, zIndex:15,
                 display:"flex", flexDirection:"column",
                 alignItems:"center", justifyContent:"center",
                 pointerEvents:"none", gap:0,
+                padding:"0 20px",
               }}>
-                <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:"clamp(8px,0.8vw,10px)", fontWeight:300, letterSpacing:"0.55em", color:"rgba(240,237,230,0.45)", textTransform:"uppercase", marginBottom:16, marginTop:0 }}>
+                <p style={{
+                  fontFamily:"'Montserrat',sans-serif",
+                  fontSize:"clamp(7px,0.8vw,10px)", fontWeight:300,
+                  letterSpacing:"0.5em", color:"rgba(240,237,230,0.45)",
+                  textTransform:"uppercase", marginBottom:14, marginTop:0,
+                  textAlign:"center",
+                }}>
                   Est. 2024 &nbsp;·&nbsp; Premium Clothing
                 </p>
 
-                {/* Headline — letter by letter stagger on load */}
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(22px,4vw,62px)", fontWeight:400, letterSpacing:"0.28em", textTransform:"uppercase", lineHeight:1, marginBottom:12, display:"flex", flexWrap:"wrap", justifyContent:"center", perspective:"500px" }}>
+                <div style={{
+                  fontFamily:"'Cormorant Garamond',serif",
+                  fontSize:"clamp(18px,4vw,62px)", fontWeight:400,
+                  letterSpacing:"clamp(0.1em,0.28em,0.28em)",
+                  textTransform:"uppercase", lineHeight:1,
+                  marginBottom:12,
+                  display:"flex", flexWrap:"wrap", justifyContent:"center",
+                  perspective:"500px",
+                  textAlign:"center",
+                }}>
                   {headlineLetters}
                 </div>
 
-                <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:"clamp(9px,0.85vw,11px)", fontWeight:300, letterSpacing:"0.38em", color:"rgba(240,237,230,0.45)", textTransform:"uppercase", marginBottom:0, marginTop:0 }}>
+                <p style={{
+                  fontFamily:"'Montserrat',sans-serif",
+                  fontSize:"clamp(8px,0.85vw,11px)", fontWeight:300,
+                  letterSpacing:"0.35em", color:"rgba(240,237,230,0.45)",
+                  textTransform:"uppercase", marginBottom:0, marginTop:0,
+                  textAlign:"center",
+                }}>
                   Welcome to the Future of Clothing
                 </p>
               </div>
 
-              {/* Stat blocks — revealed L→R as zipper opens */}
-              <StatBlock ref={cb1Ref} left="calc(16% - 130px)" label="Sustainability" num="100%" desc="Organic &amp; Recycled Materials" />
-              <StatBlock ref={cb2Ref} left="calc(42% - 130px)" label="Our Community"  num="12K+"  desc="Happy Customers Worldwide" />
-              <StatBlock ref={cb3Ref} left="calc(68% - 130px)" label="Satisfaction"   num="98%"   desc="Customer Satisfaction Rate" />
+              {/* Stat blocks — mobile: centered stack, desktop: spread across */}
+              <StatBlock
+                ref={cb1Ref}
+                left="calc(50% - 130px)"
+                mobileLeft="calc(50% - 130px)"
+                label="Sustainability" num="100%"
+                desc="Organic &amp; Recycled Materials"
+              />
+              <StatBlock
+                ref={cb2Ref}
+                left="calc(42% - 130px)"
+                mobileLeft="calc(50% - 130px)"
+                label="Our Community" num="12K+"
+                desc="Happy Customers Worldwide"
+              />
+              <StatBlock
+                ref={cb3Ref}
+                left="calc(68% - 130px)"
+                mobileLeft="calc(50% - 130px)"
+                label="Satisfaction" num="98%"
+                desc="Customer Satisfaction Rate"
+              />
 
               {/* Fully open text */}
-              <div ref={openTextRef} style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", textAlign:"center", zIndex:2, pointerEvents:"none", opacity:0, display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
-                <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(30px,4vw,56px)", fontWeight:300, letterSpacing:"0.4em", color:"#111", textTransform:"uppercase", lineHeight:1.25 }}>
+              <div ref={openTextRef} style={{
+                position:"absolute", top:"50%", left:"50%",
+                transform:"translate(-50%,-50%)",
+                textAlign:"center", zIndex:2, pointerEvents:"none", opacity:0,
+                display:"flex", flexDirection:"column", alignItems:"center", gap:14,
+                width:"90%", maxWidth:500,
+              }}>
+                <h2 style={{
+                  fontFamily:"'Cormorant Garamond',serif",
+                  fontSize:"clamp(24px,4vw,56px)", fontWeight:300,
+                  letterSpacing:"0.4em", color:"#111",
+                  textTransform:"uppercase", lineHeight:1.25,
+                }}>
                   Fully Revealed
                 </h2>
                 <div style={{ width:48, height:1, background:"#bbb" }} />
-                <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:10, fontWeight:300, letterSpacing:"0.35em", color:"#666", textTransform:"uppercase" }}>
+                <p style={{
+                  fontFamily:"'Montserrat',sans-serif",
+                  fontSize:"clamp(8px,1vw,10px)", fontWeight:300,
+                  letterSpacing:"0.35em", color:"#666", textTransform:"uppercase",
+                }}>
                   The future of clothing, uncovered
                 </p>
               </div>
+
+              {/* Exit overlays */}
+              <div id="hz-exit-top" style={{ position:"absolute", top:0, left:0, width:"100%", height:"50%", background:"#1e1e1e", zIndex:13, willChange:"transform", pointerEvents:"none", opacity:0 }} />
+              <div id="hz-exit-bot" style={{ position:"absolute", bottom:0, left:0, width:"100%", height:"50%", background:"#1e1e1e", zIndex:13, willChange:"transform", pointerEvents:"none", opacity:0 }} />
 
               {/* SVG Fabric */}
               <svg style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", zIndex:10, pointerEvents:"none" }}
@@ -300,7 +367,13 @@ export default function ZipperHeroHorizontal() {
 
               {/* Slider */}
               <div ref={sliderRef} style={{ position:"absolute", zIndex:20, display:"flex", flexDirection:"row", alignItems:"center", willChange:"transform" }}>
-                <div style={{ width:44, height:32, background:"linear-gradient(to bottom right,#e8e8e8,#a8a8a8 35%,#d0d0d0 55%,#606060)", borderRadius:5, display:"flex", alignItems:"center", justifyContent:"center", position:"relative", boxShadow:"0 5px 20px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.35)" }}>
+                <div style={{
+                  width:"clamp(32px,44px,44px)", height:"clamp(24px,32px,32px)",
+                  background:"linear-gradient(to bottom right,#e8e8e8,#a8a8a8 35%,#d0d0d0 55%,#606060)",
+                  borderRadius:5, display:"flex", alignItems:"center", justifyContent:"center",
+                  position:"relative",
+                  boxShadow:"0 5px 20px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.35)",
+                }}>
                   <div style={{ position:"absolute", left:6, top:6, bottom:6, width:2, background:"rgba(255,255,255,0.28)", borderRadius:1 }} />
                   <div style={{ width:10, height:10, borderRadius:"50%", background:"#1e1e1e", border:"2px solid #505050" }} />
                 </div>
@@ -308,9 +381,9 @@ export default function ZipperHeroHorizontal() {
               </div>
 
               {/* Hint */}
-              <div ref={hintRef} style={{ position:"absolute", bottom:30, zIndex:25, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
+              <div ref={hintRef} style={{ position:"absolute", bottom:24, zIndex:25, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
                 <span style={{ fontFamily:"'Montserrat',sans-serif", fontSize:9, letterSpacing:"0.4em", color:"rgba(240,237,230,0.5)", textTransform:"uppercase" }}>Scroll</span>
-                <div style={{ width:1, height:32, background:"linear-gradient(to bottom,rgba(240,237,230,0.5),transparent)", animation:"hzp 1.8s ease-in-out infinite" }} />
+                <div style={{ width:1, height:28, background:"linear-gradient(to bottom,rgba(240,237,230,0.5),transparent)", animation:"hzp 1.8s ease-in-out infinite" }} />
               </div>
 
               <style>{`
@@ -320,39 +393,97 @@ export default function ZipperHeroHorizontal() {
             </div>
 
             {/* PANEL 2: The Collection is Open */}
-            <div style={{ width:"100vw", height:"100vh", flexShrink:0, background:"#1a1a1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:24 }}>
-              <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(36px,5.5vw,76px)", fontWeight:300, letterSpacing:"0.4em", color:"#f0ede6", textTransform:"uppercase", textAlign:"center", lineHeight:1.25 }}>
+            <div style={{
+              width:"100vw", height:"100vh", flexShrink:0,
+              background:"#1a1a1a",
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center",
+              gap:24, padding:"0 24px",
+            }}>
+              <h2 style={{
+                fontFamily:"'Cormorant Garamond',serif",
+                fontSize:"clamp(28px,5.5vw,76px)", fontWeight:300,
+                letterSpacing:"clamp(0.15em,0.4em,0.4em)", color:"#f0ede6",
+                textTransform:"uppercase", textAlign:"center", lineHeight:1.25,
+              }}>
                 The Collection<br />is Open
               </h2>
               <div style={{ width:60, height:1, background:"rgba(240,237,230,0.3)" }} />
-              <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:11, fontWeight:300, letterSpacing:"0.35em", color:"rgba(240,237,230,0.5)", textTransform:"uppercase", textAlign:"center" }}>
+              <p style={{
+                fontFamily:"'Montserrat',sans-serif",
+                fontSize:"clamp(9px,1.1vw,11px)", fontWeight:300,
+                letterSpacing:"0.35em", color:"rgba(240,237,230,0.5)",
+                textTransform:"uppercase", textAlign:"center",
+              }}>
                 Spring · Summer · 2026
               </p>
             </div>
 
             {/* PANEL 3: Explore */}
-            <div style={{ width:"100vw", height:"100vh", flexShrink:0, background:"#f0ede6", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:28 }}>
-              <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px,5vw,68px)", fontWeight:300, letterSpacing:"0.4em", color:"#111", textTransform:"uppercase", textAlign:"center", lineHeight:1.25 }}>
+            <div style={{
+              width:"100vw", height:"100vh", flexShrink:0,
+              background:"#f0ede6",
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center",
+              gap:24, padding:"0 24px",
+            }}>
+              <h2 style={{
+                fontFamily:"'Cormorant Garamond',serif",
+                fontSize:"clamp(28px,5vw,68px)", fontWeight:300,
+                letterSpacing:"clamp(0.15em,0.4em,0.4em)", color:"#111",
+                textTransform:"uppercase", textAlign:"center", lineHeight:1.25,
+              }}>
                 Explore<br />the Range
               </h2>
               <div style={{ width:60, height:1, background:"#ccc" }} />
-              <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:11, fontWeight:300, letterSpacing:"0.35em", color:"#666", textTransform:"uppercase", textAlign:"center" }}>
+              <p style={{
+                fontFamily:"'Montserrat',sans-serif",
+                fontSize:"clamp(9px,1.1vw,11px)", fontWeight:300,
+                letterSpacing:"0.3em", color:"#666",
+                textTransform:"uppercase", textAlign:"center",
+              }}>
                 Sustainable · Engineered · Timeless
               </p>
-              <button style={{ marginTop:8, padding:"14px 48px", border:"1px solid #111", fontFamily:"'Montserrat',sans-serif", fontSize:10, fontWeight:300, letterSpacing:"0.4em", color:"#111", textTransform:"uppercase", cursor:"pointer", background:"transparent", transition:"all 0.3s" }}
+              <button
+                style={{
+                  marginTop:8, padding:"14px 40px",
+                  border:"1px solid #111",
+                  fontFamily:"'Montserrat',sans-serif",
+                  fontSize:"clamp(9px,1vw,10px)", fontWeight:300,
+                  letterSpacing:"0.4em", color:"#111",
+                  textTransform:"uppercase", cursor:"pointer",
+                  background:"transparent", transition:"all 0.3s",
+                }}
                 onMouseEnter={e => { e.currentTarget.style.background="#111"; e.currentTarget.style.color="#f0ede6"; }}
-                onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.color="#111"; }}>
+                onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.color="#111"; }}
+              >
                 Shop Now
               </button>
             </div>
 
             {/* PANEL 4: Final */}
-            <div style={{ width:"100vw", height:"100vh", flexShrink:0, background:"#111", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:24 }}>
-              <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(30px,4.5vw,64px)", fontWeight:300, letterSpacing:"0.45em", color:"#f0ede6", textTransform:"uppercase", textAlign:"center", lineHeight:1.3 }}>
+            <div style={{
+              width:"100vw", height:"100vh", flexShrink:0,
+              background:"#111",
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center",
+              gap:24, padding:"0 24px",
+            }}>
+              <h2 style={{
+                fontFamily:"'Cormorant Garamond',serif",
+                fontSize:"clamp(28px,4.5vw,64px)", fontWeight:300,
+                letterSpacing:"clamp(0.15em,0.45em,0.45em)", color:"#f0ede6",
+                textTransform:"uppercase", textAlign:"center", lineHeight:1.3,
+              }}>
                 FIZZFABRIC<br />2026
               </h2>
               <div style={{ width:60, height:1, background:"rgba(240,237,230,0.25)" }} />
-              <p style={{ fontFamily:"'Montserrat',sans-serif", fontSize:11, fontWeight:300, letterSpacing:"0.35em", color:"rgba(240,237,230,0.5)", textTransform:"uppercase", textAlign:"center" }}>
+              <p style={{
+                fontFamily:"'Montserrat',sans-serif",
+                fontSize:"clamp(9px,1.1vw,11px)", fontWeight:300,
+                letterSpacing:"0.35em", color:"rgba(240,237,230,0.5)",
+                textTransform:"uppercase", textAlign:"center",
+              }}>
                 Where craft meets conscience
               </p>
             </div>
@@ -361,8 +492,12 @@ export default function ZipperHeroHorizontal() {
         </div>
       </div>
 
-      {/* Progress dots — static initial bg, GSAP updates via ref */}
-      <div style={{ position:"fixed", right:20, top:"50%", transform:"translateY(-50%)", zIndex:200, display:"flex", flexDirection:"column", gap:10 }}>
+      {/* Progress dots */}
+      <div style={{
+        position:"fixed", right:16, top:"50%",
+        transform:"translateY(-50%)",
+        zIndex:200, display:"flex", flexDirection:"column", gap:10,
+      }}>
         <div ref={d0Ref} style={{ width:5, height:5, borderRadius:"50%", transition:"all 0.3s", background:"#f0ede6" }} />
         <div ref={d1Ref} style={{ width:5, height:5, borderRadius:"50%", transition:"all 0.3s", background:"rgba(240,237,230,0.25)" }} />
         <div ref={d2Ref} style={{ width:5, height:5, borderRadius:"50%", transition:"all 0.3s", background:"rgba(0,0,0,0.18)" }} />
@@ -372,10 +507,11 @@ export default function ZipperHeroHorizontal() {
   );
 }
 
-/* Stat block — revealed during scroll */
-const StatBlock = forwardRef(({ left, label, num, desc }, ref) => (
+/* Stat block */
+const StatBlock = forwardRef(({ left, mobileLeft, label, num, desc }, ref) => (
   <div ref={ref} style={{
-    position:"absolute", top:"50%", left,
+    position:"absolute", top:"50%",
+    left: typeof window !== "undefined" && window.innerWidth < 768 ? mobileLeft : left,
     transform:"translateY(-50%)",
     display:"flex", flexDirection:"column",
     alignItems:"center", textAlign:"center",
@@ -383,10 +519,24 @@ const StatBlock = forwardRef(({ left, label, num, desc }, ref) => (
     pointerEvents:"none",
     filter:"drop-shadow(0 0 20px rgba(240,237,230,1)) drop-shadow(0 0 40px rgba(240,237,230,0.8))",
   }}>
-    <span style={{ fontFamily:"'Montserrat',sans-serif", fontSize:9, fontWeight:300, letterSpacing:"0.5em", color:"#777", textTransform:"uppercase" }}>{label}</span>
+    <span style={{
+      fontFamily:"'Montserrat',sans-serif",
+      fontSize:9, fontWeight:300,
+      letterSpacing:"0.5em", color:"#777", textTransform:"uppercase",
+    }}>{label}</span>
     <div style={{ width:28, height:1, background:"#bbb" }} />
-    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(48px,6.5vw,88px)", fontWeight:400, color:"#111", letterSpacing:"0.04em", lineHeight:1 }}>{num}</div>
-    <div style={{ fontFamily:"'Montserrat',sans-serif", fontSize:10, fontWeight:300, letterSpacing:"0.22em", color:"#555", textTransform:"uppercase", lineHeight:1.8 }}
-      dangerouslySetInnerHTML={{ __html: desc }} />
+    <div style={{
+      fontFamily:"'Cormorant Garamond',serif",
+      fontSize:"clamp(40px,6.5vw,88px)", fontWeight:400,
+      color:"#111", letterSpacing:"0.04em", lineHeight:1,
+    }}>{num}</div>
+    <div style={{
+      fontFamily:"'Montserrat',sans-serif",
+      fontSize:"clamp(9px,1vw,10px)", fontWeight:300,
+      letterSpacing:"0.22em", color:"#555",
+      textTransform:"uppercase", lineHeight:1.8,
+    }}
+      dangerouslySetInnerHTML={{ __html: desc }}
+    />
   </div>
 ));
