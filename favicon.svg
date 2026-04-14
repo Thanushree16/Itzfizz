@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background -->
+  <rect width="100" height="100" fill="#0d0d0d"/>
+  <!-- Zipper line hint -->
+  <line x1="50" y1="8" x2="50" y2="92" stroke="#444" stroke-width="2" stroke-dasharray="4 3"/>
+  <!-- Left tooth -->
+  <rect x="32" y="44" width="16" height="7" rx="1.5" fill="#c4c4c4"/>
+  <!-- Right tooth -->
+  <rect x="52" y="44" width="16" height="7" rx="1.5" fill="#c4c4c4"/>
+  <!-- Left tooth 2 -->
+  <rect x="32" y="56" width="16" height="7" rx="1.5" fill="#999"/>
+  <!-- Right tooth 2 -->
+  <rect x="52" y="56" width="16" height="7" rx="1.5" fill="#999"/>
+  <!-- Slider -->
+  <rect x="38" y="36" width="24" height="18" rx="3" fill="url(#sg)"/>
+  <circle cx="50" cy="45" r="4" fill="#1a1a1a" stroke="#555" stroke-width="1"/>
+  <defs>
+    <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e0e0e0"/>
+      <stop offset="50%" stop-color="#a0a0a0"/>
+      <stop offset="100%" stop-color="#606060"/>
+    </linearGradient>
+  </defs>
+</svg>
