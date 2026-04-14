@@ -1,16 +1,28 @@
-# React + Vite
+# ITZFIZZ — Hero Section
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Live: **[thanushree16.github.io/Itzfizz](https://thanushree16.github.io/Itzfizz/)**
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+For this assignment I wanted to do something more interesting than a standard parallax or image slide. The idea was — what if the hero section itself was a zipper? You scroll, it opens, content is revealed underneath. That became the whole thing.
 
-## React Compiler
+The zipper uses SVG bezier curves to simulate how real cloth actually separates — not a straight line split, but an organic curve that starts narrow at the slider and widens as it opens. Each tooth is positioned dynamically along that curve. The whole animation is tied directly to scroll progress, so it feels tactile and controlled.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+**On load:**
+- Headline letters stagger in one by one
+- Stats fade in with a delay between each
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**While scrolling:**
+- Zipper slider descends, cloth peels apart
+- Stats reveal through the opening gap (100%, 12K+, 98%)
+- When fully open, panels slide off screen left and right
+
+---
+
+**Stack:** React · GSAP ScrollTrigger · Tailwind CSS · Vite
+
+---
+
+*Thanushree · 2026*
